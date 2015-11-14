@@ -164,7 +164,7 @@ def process_weblogs():
 
     web.drop(drop_columns, axis=1, inplace=True)
 
-    grouped = web.groupby('id').sum()
+    grouped = web.groupby('id').sum()  #
     return grouped
 
 
