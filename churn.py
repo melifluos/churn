@@ -136,17 +136,17 @@ def process_receipts(ids):
     div_price = grouped_div.pivot('id', 'division', 'price')
     div_price.columns = ['div4_price', 'div5_price', 'div6_price', 'div7_price']
 
-    grouped_div = receipts[['id', 'division', 'qty', 'price']].groupby(['id', 'division']).sum()
-    grouped_div.reset_index(inplace=True)
-    div_qty = grouped_div.pivot('id', 'division', 'qty')
-    div_qty.columns = ['div4_qty', 'div5_qty', 'div6_qty', 'div7_qty']
-    div_price = grouped_div.pivot('id', 'division', 'price')
-    div_price.columns = ['div4_price', 'div5_price', 'div6_price', 'div7_price']
+
+    grouped_source = receipts[['id', 'source', 'qty', 'price']].groupby(['id', 'source']).sum()
+    grouped_source.reset_index(inplace=True)
+    source_qty = grouped_source.pivot('id', 'source', 'qty')
+    source_qty.columns = ['source1_qty', 'source2_qty', 'source3_qty', 'source4_qty']
+    source_price = grouped_source.pivot('id', 'source', 'price')
+    source_price.columns = ['source1_price', 'source2_price', 'source3_price', 'source4_price']
 
 
-
-    grouped_source = receipts[['id', 'division', 'qty', 'price']].groupby(['id', 'source']).sum()
-    return grouped
+    #grouped_source = receipts[['id', 'division', 'qty', 'price']].groupby(['id', 'source']).sum()
+    return pd.cat([div_qty, div_price, source_qty, source_price], axis=1)
 
 
 def process_weblogs():
