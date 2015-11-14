@@ -146,7 +146,7 @@ def process_receipts(ids):
 
 
     #grouped_source = receipts[['id', 'division', 'qty', 'price']].groupby(['id', 'source']).sum()
-    return pd.cat([div_qty, div_price, source_qty, source_price], axis=1)
+    return pd.concat([div_qty, div_price, source_qty, source_price], axis=1)
 
 
 def process_weblogs():
