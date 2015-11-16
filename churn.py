@@ -1,15 +1,20 @@
+#!/usr/bin/env python -W ignore:DeprecationWarning
+
 from __future__ import division
 import pandas as pd
 import numpy as np
 import glob  # read files in dir
 from sklearn.preprocessing import StandardScaler  # set all variables to sigma = 1, mu = 0
-from sklearn.cross_validation import KFold
+from sklearn.cross_validation import KFold, StratifiedKFold
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier as RF
 from sklearn.neighbors import KNeighborsClassifier as KNN
 import time
 from dateutil.parser import parse
 from datetime import datetime
+import warnings
+
+warnings.filterwarnings('ignore', category=DeprecationWarning)
 
 __author__ = 'benchamberlain'
 
@@ -33,7 +38,7 @@ def ml():
 
     print 'added receipts in ', time.time() - start, 's'
 
-    #  add number of returns
+    # add number of returns
     return_data = process_returns(customers.index.values)
     customers = customers.join(return_data, how='left')
 
@@ -57,7 +62,7 @@ def ml():
     customers['female'] = customers['gender'] == 'F'
 
     # add derived columns
-    #customers['purchase freq'] = customers['']
+    # customers['purchase freq'] = customers['']
 
     # Isolate target data
     y = np.array(customers['churn'])
@@ -108,13 +113,22 @@ def process_returns(ids):
                    'return_reason']
     returns.columns = ret_columns
 
-    ret_drop_col = ['source', 'qty']  # constant across data
-    returns.drop(ret_drop_col, inplace=True, axis=1)
+    # ret_drop_col = ['source', 'qty']  # constant across data
+    # returns = returns.drop(ret_drop_col, axis=1)
+    print returns.head()
+    grouped_returns = returns[['id', 'return_id', 'return_action']].groupby(['id', 'return_action']).size()
+    # try:
+    #     grouped_returns = grouped_returns.drop(['return_action', 'id'], axis=1)
+    # except KeyError:
+    #     print 'no return action columns to remove'
 
-
-    grouped = returns[['id', 'return_id', 'return_action']].groupby(['id', 'return_action']).count()
-    grouped.reset_index(inplace=True)
-    return grouped.pivot('id', 'return_action', 'return_id')
+    print grouped_returns.head()
+    grouped_returns = grouped_returns.reset_index()
+    grouped_returns.columns = ['id', 'return_action', 'count']
+    print grouped_returns.head()
+    return_counts = grouped_returns.pivot('id', 'return_action', 'count')
+    print return_counts.head()
+    return return_counts
 
 
 def process_receipts(ids):
@@ -126,27 +140,27 @@ def process_receipts(ids):
     receipts = read_dir('local_resources/receipts/0*', rec_columns)
     receipts = receipts[receipts['id'].isin(ids)]
     receipts['delta date'] = receipts['date'].apply(parse_created_on)
-    grouped = receipts[['id', 'qty', 'price', 'delta date']].groupby('id').agg({'qty': np.sum, 'price': np.sum, 'delta date': np.min})
+    grouped = receipts[['id', 'qty', 'price', 'delta date']].groupby('id').agg(
+        {'qty': np.sum, 'price': np.sum, 'delta date': np.min})
     grouped.columns = ['days_since_last_receipt', 'total spend', 'total_items']
 
     grouped_div = receipts[['id', 'division', 'qty', 'price']].groupby(['id', 'division']).sum()
-    grouped_div.reset_index(inplace=True)
+    grouped_div = grouped_div.reset_index()
     div_qty = grouped_div.pivot('id', 'division', 'qty')
     div_qty.columns = ['div4_qty', 'div5_qty', 'div6_qty', 'div7_qty']
     div_price = grouped_div.pivot('id', 'division', 'price')
     div_price.columns = ['div4_price', 'div5_price', 'div6_price', 'div7_price']
 
-
     grouped_source = receipts[['id', 'source', 'qty', 'price']].groupby(['id', 'source']).sum()
-    grouped_source.reset_index(inplace=True)
+    grouped_source = grouped_source.reset_index()
     source_qty = grouped_source.pivot('id', 'source', 'qty')
     source_qty.columns = ['source1_qty', 'source2_qty', 'source3_qty', 'source4_qty']
     source_price = grouped_source.pivot('id', 'source', 'price')
     source_price.columns = ['source1_price', 'source2_price', 'source3_price', 'source4_price']
 
 
-    #grouped_source = receipts[['id', 'division', 'qty', 'price']].groupby(['id', 'source']).sum()
-    return pd.concat([div_qty, div_price, source_qty, source_price], axis=1)
+    # grouped_source = receipts[['id', 'division', 'qty', 'price']].groupby(['id', 'source']).sum()
+    return pd.concat([div_qty, div_price, source_qty, source_price, grouped], axis=1)
 
 
 def process_weblogs():
@@ -230,7 +244,7 @@ def read_data():
 
 def run_cv(X, y, clf_class, **kwargs):
     # Construct a kfolds object
-    kf = KFold(len(y), n_folds=5, shuffle=True)
+    kf = StratifiedKFold(y, n_folds=5)
     y_pred = y.copy()
 
     # Iterate through folds
