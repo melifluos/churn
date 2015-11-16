@@ -57,7 +57,7 @@ def ml():
     customers['female'] = customers['gender'] == 'F'
 
     # add derived columns
-    #customers['purchase freq'] = customers['']
+    # customers['purchase freq'] = customers['']
 
     # Isolate target data
     y = np.array(customers['churn'])
@@ -111,7 +111,6 @@ def process_returns(ids):
     ret_drop_col = ['source', 'qty']  # constant across data
     returns.drop(ret_drop_col, inplace=True, axis=1)
 
-
     grouped = returns[['id', 'return_id', 'return_action']].groupby(['id', 'return_action']).count()
     grouped.reset_index(inplace=True)
     return grouped.pivot('id', 'return_action', 'return_id')
@@ -126,7 +125,8 @@ def process_receipts(ids):
     receipts = read_dir('local_resources/receipts/0*', rec_columns)
     receipts = receipts[receipts['id'].isin(ids)]
     receipts['delta date'] = receipts['date'].apply(parse_created_on)
-    grouped = receipts[['id', 'qty', 'price', 'delta date']].groupby('id').agg({'qty': np.sum, 'price': np.sum, 'delta date': np.min})
+    grouped = receipts[['id', 'qty', 'price', 'delta date']].groupby('id').agg(
+        {'qty': np.sum, 'price': np.sum, 'delta date': np.min})
     grouped.columns = ['days_since_last_receipt', 'total spend', 'total_items']
 
     grouped_div = receipts[['id', 'division', 'qty', 'price']].groupby(['id', 'division']).sum()
@@ -136,7 +136,6 @@ def process_receipts(ids):
     div_price = grouped_div.pivot('id', 'division', 'price')
     div_price.columns = ['div4_price', 'div5_price', 'div6_price', 'div7_price']
 
-
     grouped_source = receipts[['id', 'source', 'qty', 'price']].groupby(['id', 'source']).sum()
     grouped_source.reset_index(inplace=True)
     source_qty = grouped_source.pivot('id', 'source', 'qty')
@@ -145,7 +144,7 @@ def process_receipts(ids):
     source_price.columns = ['source1_price', 'source2_price', 'source3_price', 'source4_price']
 
 
-    #grouped_source = receipts[['id', 'division', 'qty', 'price']].groupby(['id', 'source']).sum()
+    # grouped_source = receipts[['id', 'division', 'qty', 'price']].groupby(['id', 'source']).sum()
     return pd.concat([div_qty, div_price, source_qty, source_price], axis=1)
 
 
