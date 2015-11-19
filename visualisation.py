@@ -15,6 +15,9 @@ from sklearn.metrics import roc_curve, auc
 from sklearn.cross_validation import train_test_split
 from sklearn.preprocessing import label_binarize
 from sklearn.multiclass import OneVsRestClassifier
+from sklearn.decomposition import PCA
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from mpl_toolkits.mplot3d import Axes3D
 
 
 def accuracy(y_true, y_pred):
@@ -277,6 +280,79 @@ def plot_boxplots(data):
     plt.show()
 
 
+def plot_pca(X, y, class_names=['stayed', 'churned'], n_comps='mle'):
+    """
+    Run Tipping and Bishop's probabilistic PCA. Default is to use Minka's MLE method to determine the optimum number of
+    components
+    :param X: data
+    :param y: target values
+    :param class_names: class name list
+    :param n_comps: the number of PCA components to keep
+    :return:
+    """
+    pca = PCA(n_components=n_comps)
+    X_r = pca.fit(X).transform(X)
+
+    # lda = LinearDiscriminantAnalysis(n_components=n_comps)
+    # X_r2 = lda.fit(X, y).transform(X)
+    # print 'lda results'
+
+    # Percentage of variance explained for each components
+    print('explained variance ratio (first two components): %s'
+          % str(pca.explained_variance_ratio_))
+
+    plt.figure()
+    for c, i, target_name in zip("rb", [0, 1], class_names):
+        plt.scatter(X_r[y == i, 0], X_r[y == i, 1], c=c, label=target_name)
+    plt.legend()
+    plt.xlabel('pca primary component')
+    plt.ylabel('pca secondary component')
+    plt.title('PCA')
+
+    plt.savefig('local_results/pca.png', bbox_inches='tight')
+    plt.clf()
+    return X_r
+
+
+def plot3d_pca(X, y):
+
+    fig = plt.figure(1, figsize=(4, 3))
+    plt.clf()
+    ax = Axes3D(fig, rect=[0, 0, .95, 1], elev=48, azim=134)
+
+    plt.cla()
+    pca = PCA(n_components=3)
+    pca.fit(X)
+    X = pca.transform(X)
+
+    for name, label in [('stayed', 0), ('churned', 1)]:
+        ax.text3D(X[y == label, 0].mean(),
+                  X[y == label, 1].mean() + 1.5,
+                  X[y == label, 2].mean(), name,
+                  horizontalalignment='center',
+                  bbox=dict(alpha=.5, edgecolor='w', facecolor='w'))
+    # Reorder the labels to have colors matching the cluster results
+    # y = np.choose(y, [1, 2, 0]).astype(np.float)
+    ax.scatter(X[:, 0], X[:, 1], X[:, 2], c=y, cmap=plt.cm.coolwarm)
+
+    # x_surf = [X[:, 0].min(), X[:, 0].max(),
+    #           X[:, 0].min(), X[:, 0].max()]
+    # y_surf = [X[:, 0].max(), X[:, 0].max(),
+    #           X[:, 0].min(), X[:, 0].min()]
+    # x_surf = np.array(x_surf)
+    # y_surf = np.array(y_surf)
+    # v0 = pca.transform(pca.components_[[0]])
+    # v0 /= v0[-1]
+    # v1 = pca.transform(pca.components_[[1]])
+    # v1 /= v1[-1]
+    #
+    # ax.w_xaxis.set_ticklabels([])
+    # ax.w_yaxis.set_ticklabels([])
+    # ax.w_zaxis.set_ticklabels([])
+
+    plt.savefig('local_results/3d_pca.png', bbox_inches='tight')
+    plt.clf()
+
 if __name__ == '__main__':
     np.random.seed(0)
     customers = pd.read_csv('local_resources/customer/000000_0', sep='\t')
@@ -300,5 +376,6 @@ if __name__ == '__main__':
     scaler = StandardScaler()
     X = scaler.fit_transform(X)
 
-    algos = [('SVM', SVC), ('RF', RF), ('KNN', KNN)]
-    plot_roc(X, y, algos)
+
+    # algos = [('SVM', SVC), ('RF', RF), ('KNN', KNN)]
+    # plot_roc(X, y, algos)
