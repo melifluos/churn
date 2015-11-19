@@ -5,12 +5,10 @@ from sklearn.cross_validation import KFold, StratifiedKFold
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier as RF
 from sklearn.neighbors import KNeighborsClassifier as KNN
-# This is important
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import confusion_matrix
 from matplotlib import pyplot as plt
 from sklearn.learning_curve import learning_curve
-from sklearn.datasets import load_iris
 from sklearn.metrics import roc_curve, auc
 from sklearn.cross_validation import train_test_split
 from sklearn.preprocessing import label_binarize
