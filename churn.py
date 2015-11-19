@@ -15,8 +15,9 @@ from dateutil.parser import parse
 from datetime import datetime
 import warnings
 from matplotlib import pyplot as plt
-from visualisation import plot_confusion_matrix, plot_learning_curve, plot_roc
+from visualisation import plot_confusion_matrix, plot_learning_curve, plot_roc, plot_pca, plot3d_pca
 from sklearn.metrics import confusion_matrix
+
 
 warnings.filterwarnings('ignore', category=DeprecationWarning)
 
@@ -36,7 +37,7 @@ def ml():
     print 'read customer table in ', time.time() - start, 's'
     #  sample some data
     np.random.seed = 13253
-    rows = np.random.choice(customers.index.values, 100000)
+    rows = np.random.choice(customers.index.values, 20000)
     customers = customers.ix[rows]
 
     #  add total number of purchases and total purchase value features
@@ -55,7 +56,7 @@ def ml():
 
     print 'added returns in ', time.time() - start, 's'
 
-    # #  add web summaries
+    # add web summaries
     web_data = process_weblogs()
     customers = customers.join(web_data, how='left')
 
@@ -110,13 +111,16 @@ def ml():
     print "Unique target labels:", np.unique(y)
     rfecv = run_rfecv(X, y, RF)
     print 'features', features
-    print 'ranking', rfecv.ranking_
-    print 'support', rfecv.support_
-    print 'feature rank: ', rfecv.grid_scores_
+    #print 'ranking', rfecv.ranking_
+    #print 'support', rfecv.support_
+    #print 'feature rank: ', rfecv.grid_scores_
     X = X[:, rfecv.support_]
 #############################################################################################
     ### VISUALISATION
 ###############################################################################################
+
+    plot3d_pca(X, y)
+    X = plot_pca(X, y, class_names=['stayed', 'churned'])
 
     svc_pred = run_cv(X, y, SVC)
     rf_pred = run_cv(X, y, RF)
@@ -246,7 +250,7 @@ def process_weblogs():
     web = read_dir('local_resources/sessionsummary/0*', web_columns)
     drop_columns = ['user_agent', 'screen_res', 'browser_size', 'start_time', 'site', 'country']  # not relevant
 
-    web.drop(drop_columns, axis=1, inplace=True)
+    web = web.drop(drop_columns, axis=1)
 
     grouped = web.groupby('id').sum()  #
     return grouped
