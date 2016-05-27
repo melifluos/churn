@@ -26,7 +26,7 @@ __author__ = 'benchamberlain'
 
 def ml():
     start = time.time()
-    customers = pd.read_csv('local_resources/customer/000000_0', sep='\t')
+    customers = pd.read_csv('local_resources/part-r-000000', sep='\t')
     cust_columns = ['id', 'churn', 'gender', 'country', 'created_on', 'yob', 'premier']
     customers.columns = cust_columns
     customers.set_index('id', inplace=True)
